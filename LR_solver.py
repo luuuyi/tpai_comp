@@ -24,7 +24,7 @@ def generate_LR_model(file_name):
     y = train_np[:,0]
     X = train_np[:,1:]
     print 'Train Logistic Regression Model...'
-    clf = linear_model.LogisticRegression(penalty='l1',C=1.0,tol=1e-6)
+    clf = linear_model.LogisticRegression(penalty='l2',C=1.0,tol=1e-6,solver='sag')
     clf.fit(X,y)
     print 'Training Done...'
     return clf
