@@ -3,6 +3,7 @@ import pandas as pd
 import common
 import matplotlib.pyplot as plt
 from sklearn import linear_model
+import sklearn.preprocessing as preprocessing
 
 def read_from_file(file_name, chunk_size=50000):
     reader = pd.read_csv(file_name, iterator=True)
@@ -57,8 +58,10 @@ def process_user_file(src_file_name,dst_file_name):
 
 def process_train_file(src_file_name, dst_file_name, is_skip_regenerate=False):
     ori_train_df = read_from_file(src_file_name)
-    #print ori_train_df.info()
-    #print ori_train_df.describe()
+    dummy_connect_type = pd.get_dummies(ori_train_df['connectionType'], prefix='connectionType')
+    dummy_telecoms = pd.get_dummies(ori_train_df['telecomsOperator'], prefix='telecomsOperator')
+    ori_train_df = pd.concat([ori_train_df, dummy_connect_type, dummy_telecoms], axis=1)
+    
     if not is_skip_regenerate:
         print "Process Ad File..."
         process_ad_file(common.ORIGIN_AD_CSV,common.PROCESSED_AD_CSV)
@@ -75,16 +78,19 @@ def process_train_file(src_file_name, dst_file_name, is_skip_regenerate=False):
     merge_train_data = pd.merge(ori_train_df,processed_ad_df,how='left',on='creativeID')
     merge_train_data = pd.merge(merge_train_data, processed_pos_df,how='left', on='positionID')
     merge_train_data = pd.merge(merge_train_data, processed_user_df,how='left', on='userID')
-    merge_train_data.drop(['appPlatform','sitesetID','positionType','gender','education','marriageStatus','haveBaby'], axis=1, inplace=True)
-    #print merge_train_data.info()
-    #print merge_train_data.describe()
+    #merge_train_data.drop(['appPlatform','sitesetID','positionType','gender','education','marriageStatus','haveBaby'], axis=1, inplace=True)
+    scaler = preprocessing.StandardScaler()
+    age_scale_param = scaler.fit(merge_train_data['age'])
+    merge_train_data['age_scaled'] = scaler.fit_transform(merge_train_data['age'], age_scale_param)
 
     merge_train_data.to_csv(dst_file_name,index=False)
 
 def process_test_file(src_file_name, dst_file_name, is_skip_regenerate=False):
     ori_test_df = read_from_file(src_file_name)
-    #print ori_train_df.info()
-    #print ori_train_df.describe()
+    dummy_connect_type = pd.get_dummies(ori_test_df['connectionType'], prefix='connectionType')
+    dummy_telecoms = pd.get_dummies(ori_test_df['telecomsOperator'], prefix='telecomsOperator')
+    ori_test_df = pd.concat([ori_test_df, dummy_connect_type, dummy_telecoms], axis=1)
+    
     if not is_skip_regenerate:
         print "Process Ad File..."
         process_ad_file(common.ORIGIN_AD_CSV,common.PROCESSED_AD_CSV)
@@ -101,9 +107,10 @@ def process_test_file(src_file_name, dst_file_name, is_skip_regenerate=False):
     merge_test_data = pd.merge(ori_test_df,processed_ad_df,how='left',on='creativeID')
     merge_test_data = pd.merge(merge_test_data, processed_pos_df,how='left', on='positionID')
     merge_test_data = pd.merge(merge_test_data, processed_user_df,how='left', on='userID')
-    merge_test_data.drop(['appPlatform','sitesetID','positionType','gender','education','marriageStatus','haveBaby'], axis=1, inplace=True)
-    #print merge_train_data.info()
-    #print merge_train_data.describe()
+    #merge_test_data.drop(['appPlatform','sitesetID','positionType','gender','education','marriageStatus','haveBaby'], axis=1, inplace=True)
+    scaler = preprocessing.StandardScaler()
+    age_scale_param = scaler.fit(merge_test_data['age'])
+    merge_test_data['age_scaled'] = scaler.fit_transform(merge_test_data['age'], age_scale_param)
 
     merge_test_data.to_csv(dst_file_name,index=False)
 
@@ -191,5 +198,5 @@ if __name__ == '__main__':
     #analysis_ad_data(common.ORIGIN_AD_CSV)
     #analysis_pos_data(common.ORIGIN_POSITION_CSV)
     #analysis_user_data(common.ORIGIN_USER_CSV)
-    process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV,True)
+    process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV,False)
     process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV, True)

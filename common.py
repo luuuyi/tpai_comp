@@ -19,3 +19,6 @@ PROCESSED_TRAIN_CSV = './data/process/train.csv'
 PROCESSED_USER_CSV = './data/process/user.csv'
 PROCESSED_USER_APP_ACTIONS_CSV = './data/process/user_app_actions.csv'
 PROCESSED_USER_INSTALLEDAPPS_CSV = './data/process/user_installedapps.csv'
+
+#submission file
+SUBMISSION_CSV = './submission.csv'
