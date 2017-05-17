@@ -84,8 +84,9 @@ def process_train_file(src_file_name, dst_file_name, is_skip_regenerate=False):
     merge_train_data['age_scaled'] = scaler.fit_transform(merge_train_data['age'], age_scale_param)
 
     merge_train_data.to_csv(dst_file_name,index=False)
+    return age_scale_param
 
-def process_test_file(src_file_name, dst_file_name, is_skip_regenerate=False):
+def process_test_file(src_file_name, dst_file_name, scaler_para, is_skip_regenerate=False):
     ori_test_df = read_from_file(src_file_name)
     dummy_connect_type = pd.get_dummies(ori_test_df['connectionType'], prefix='connectionType')
     dummy_telecoms = pd.get_dummies(ori_test_df['telecomsOperator'], prefix='telecomsOperator')
@@ -109,8 +110,7 @@ def process_test_file(src_file_name, dst_file_name, is_skip_regenerate=False):
     merge_test_data = pd.merge(merge_test_data, processed_user_df,how='left', on='userID')
     #merge_test_data.drop(['appPlatform','sitesetID','positionType','gender','education','marriageStatus','haveBaby'], axis=1, inplace=True)
     scaler = preprocessing.StandardScaler()
-    age_scale_param = scaler.fit(merge_test_data['age'])
-    merge_test_data['age_scaled'] = scaler.fit_transform(merge_test_data['age'], age_scale_param)
+    merge_test_data['age_scaled'] = scaler.fit_transform(merge_test_data['age'], scaler_para)
 
     merge_test_data.to_csv(dst_file_name,index=False)
 
@@ -198,5 +198,5 @@ if __name__ == '__main__':
     #analysis_ad_data(common.ORIGIN_AD_CSV)
     #analysis_pos_data(common.ORIGIN_POSITION_CSV)
     #analysis_user_data(common.ORIGIN_USER_CSV)
-    process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV,False)
-    process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV, True)
+    scaler_para = process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV,False)
+    process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV, scaler_para, True)

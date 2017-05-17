@@ -42,7 +42,7 @@ def use_model_to_predict(test_file_name, model):
     selected_test_df = test_df.filter(regex='connectionType_.*|telecomsOperator_.*|sitesetID_.*|positionType_.*|gender_.*|haveBaby_.*|age_scaled')
     test_np = selected_test_df.as_matrix()
     print 'Use Model To Predict...'
-    model_df =pd.DataFrame({'coef':list(model.coef_.T), 'columns':list(selected_test_df.columns)}) 
+    model_df =pd.DataFrame({'coef':model.coef_.T[:,0], 'columns':list(selected_test_df.columns)}) 
     print model_df.describe()
     print model_df.info()
     predicts = model.predict_proba(test_np)
