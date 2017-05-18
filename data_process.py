@@ -44,8 +44,10 @@ def process_position_file(src_file_name,dst_file_name):
 
 def process_user_file(src_file_name,dst_file_name):
     origin_user_df = read_from_file(src_file_name)
-    #print origin_user_df.info()
-    #print origin_user_df.describe()
+    origin_user_df['residenceProvID'] = origin_user_df['residence'].as_matrix() / 100
+    origin_user_df['residenceCityID'] = origin_user_df['residence'] % 100
+    print origin_user_df.info()
+    print origin_user_df.describe()
     dummy_gender = pd.get_dummies(origin_user_df['gender'], prefix='gender')
     dummy_education = pd.get_dummies(origin_user_df['education'], prefix='education')
     dummy_marr_status = pd.get_dummies(origin_user_df['marriageStatus'], prefix='marriageStatus')
@@ -194,9 +196,9 @@ def analysis_user_data(file_name):
 if __name__ == '__main__':
     #process_ad_file(common.ORIGIN_AD_CSV, common.PROCESSED_AD_CSV)
     #process_position_file(common.ORIGIN_POSITION_CSV, common.PROCESSED_POSITION_CSV)
-    #process_user_file(common.ORIGIN_USER_CSV, common.PROCESSED_USER_CSV)
+    process_user_file(common.ORIGIN_USER_CSV, common.PROCESSED_USER_CSV)
     #analysis_ad_data(common.ORIGIN_AD_CSV)
     #analysis_pos_data(common.ORIGIN_POSITION_CSV)
     #analysis_user_data(common.ORIGIN_USER_CSV)
-    scaler_para = process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV,False)
-    process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV, scaler_para, True)
+    #scaler_para = process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV,False)
+    #process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV, scaler_para, True)
