@@ -6,6 +6,20 @@ import xgboost as xgb
 from sklearn.datasets import load_iris
 from sklearn.metrics import mean_squared_error
 
+def read_from_file(file_name, chunk_size=50000):
+    reader = pd.read_csv(file_name, iterator=True)
+    chunks = []
+    mark = True
+    while mark:
+        try:
+            df = reader.get_chunk(chunk_size)
+            chunks.append(df)
+        except:
+            print "Iterator Stop..."
+            mark = False
+    df = pd.concat(chunks,ignore_index=True)
+    return df
+
 def test():
     iris = load_iris()  
     #print iris
@@ -39,24 +53,38 @@ def test():
         error += err * err
     print 'Test Error: %f' % (error / len(pred))'''
 
-def generate_GBDT_model(file_name):
+def merge_all_features_to_train(train_file_name):
+    ori_train_df = read_from_file(train_file_name)
+    #merge data frame
+    #at first you should run data_process.py file
+    print "Merge Data..."
+    processed_ad_df = read_from_file(common.PROCESSED_AD_CSV)
+    processed_pos_df = read_from_file(common.PROCESSED_POSITION_CSV)
+    processed_user_df = read_from_file(common.PROCESSED_USER_CSV)
+    merge_train_data = pd.merge(ori_train_df,processed_ad_df,how='left',on='creativeID')
+    merge_train_data = pd.merge(merge_train_data, processed_pos_df,how='left', on='positionID')
+    merge_train_data = pd.merge(merge_train_data, processed_user_df,how='left', on='userID')
+    print 'Merge AD POSITION USER Data Done...'
+    return merge_train_data
+
+def generate_XGB_model(file_name):
     train_df = read_from_file(file_name)
     #featrue 18
     selected_train_df = train_df.filter(regex='label|creativeID|positionID|connectionType|telecomsOperator|adID|camgaignID|advertiserID|appID|appPlatform|sitesetID|positionType|age|gender|education|marriageStatus|haveBaby|hometown|residence')
     train_np = selected_train_df.as_matrix()
     y = train_np[:,0]
     X = train_np[:,1:]
-    print 'Train Gradient Boosting Regression Model...'
+    print 'Train Xgboost Model...'
     start_time  = datetime.datetime.now()
-    gbdt = GradientBoostingRegressor(n_estimators=10000, max_depth=18) #, class_weight='balanced')
-    gbdt.fit(X,y)
+    xbg_clf = xgb.XGBRegressor(n_estimators=12000, max_depth=10) #, class_weight='balanced')
+    xbg_clf.fit(X,y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: '
     print (end_time - start_time).seconds
 
-    print 'Save Model...'
-    joblib.dump(gbdt, 'GBDT.model')
-    return gbdt
+    #print 'Save Model...'
+    #joblib.dump(xbg_clf, 'GBDT.model')
+    return xbg_clf
 
 def use_model_to_predict(test_file_name, model):
     test_df = read_from_file(test_file_name)
@@ -72,16 +100,17 @@ def use_model_to_predict(test_file_name, model):
     return result
 
 def train_to_predict(train_file_name, test_file_name, out_put):
-    GBDT_clf = generate_RF_model(train_file_name)
-    result = use_model_to_predict(test_file_name, GBDT_clf)
+    XGB_clf = generate_XGB_model(train_file_name)
+    result = use_model_to_predict(test_file_name, XGB_clf)
     result.to_csv(out_put, index=False)
 
-def read_model_to_predict(model, test_file_name, out_put):
+'''def read_model_to_predict(model, test_file_name, out_put):
     clf = joblib.load(model)
     result = use_model_to_predict(test_file_name, clf)
-    result.to_csv(out_put, index=False)
+    result.to_csv(out_put, index=False)'''
 
 if __name__ == '__main__':
-    test()
+    #test()
     #iris = load_iris() 
     #print type(iris.data), type(iris.target)
+    train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)

@@ -8,6 +8,20 @@ from sklearn.datasets import load_iris
 from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
 
+def read_from_file(file_name, chunk_size=50000):
+    reader = pd.read_csv(file_name, iterator=True)
+    chunks = []
+    mark = True
+    while mark:
+        try:
+            df = reader.get_chunk(chunk_size)
+            chunks.append(df)
+        except:
+            print "Iterator Stop..."
+            mark = False
+    df = pd.concat(chunks,ignore_index=True)
+    return df
+
 def test():
     iris = load_iris()  
     #print iris
@@ -36,7 +50,7 @@ def test():
 
 def test_model_select_by_param():
     iris = load_iris()    
-    gbdt=GradientBoostingRegressor() 
+    gbdt = GradientBoostingRegressor() 
     parameters = {'n_estimators': [1000, 5000], 'max_depth':[3,4]}
     grid_search = GridSearchCV(estimator=gbdt, param_grid=parameters, cv=10, n_jobs=-1)
     print("parameters:")
@@ -48,6 +62,30 @@ def test_model_select_by_param():
     for param_name in sorted(parameters.keys()):
         print("\t%s: %r" % (param_name, best_parameters[param_name]))
 
+def select_model(file_name):
+    train_df = read_from_file(file_name)
+    #featrue 16
+    selected_train_df = train_df.filter(regex='label|creativeID|positionID|connectionType|telecomsOperator|adID|camgaignID|advertiserID|appID|appPlatform|sitesetID|positionType|age|gender|education|marriageStatus|haveBaby')
+    train_np = selected_train_df.as_matrix()
+    y = train_np[:,0]
+    X = train_np[:,1:]
+
+    print 'Select Model...'
+    start_time  = datetime.datetime.now()
+    gbdt = GradientBoostingRegressor() 
+    parameters = {'n_estimators': [10000, 12000], 'max_depth':[16,15, 14]}
+    grid_search = GridSearchCV(estimator=gbdt, param_grid=parameters, cv=10, n_jobs=-1)
+    print("parameters:")
+    pprint.pprint(parameters)
+    grid_search.fit(X, y)
+    print("Best score: %0.3f" % grid_search.best_score_)
+    print("Best parameters set:")
+    best_parameters=grid_search.best_estimator_.get_params()
+    for param_name in sorted(parameters.keys()):
+        print("\t%s: %r" % (param_name, best_parameters[param_name]))
+    end_time = datetime.datetime.now()
+    print 'Select Done..., Time Cost: %d' % ((end_time - start_time).seconds)
+
 def generate_GBDT_model(file_name):
     train_df = read_from_file(file_name)
     #featrue 18
@@ -57,7 +95,7 @@ def generate_GBDT_model(file_name):
     X = train_np[:,1:]
     print 'Train Gradient Boosting Regression Model...'
     start_time  = datetime.datetime.now()
-    gbdt = GradientBoostingRegressor(n_estimators=10000, max_depth=18) #, class_weight='balanced')
+    gbdt = GradientBoostingRegressor(n_estimators=12000, max_depth=10) #, class_weight='balanced')
     gbdt.fit(X,y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: '
@@ -81,7 +119,7 @@ def use_model_to_predict(test_file_name, model):
     return result
 
 def train_to_predict(train_file_name, test_file_name, out_put):
-    GBDT_clf = generate_RF_model(train_file_name)
+    GBDT_clf = generate_GBDT_model(train_file_name)
     result = use_model_to_predict(test_file_name, GBDT_clf)
     result.to_csv(out_put, index=False)
 
@@ -91,6 +129,8 @@ def read_model_to_predict(model, test_file_name, out_put):
     result.to_csv(out_put, index=False)
 
 if __name__ == '__main__':
-    test()
+    #select_model(common.PROCESSED_TRAIN_CSV)
+    train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
+    #read_model_to_predict('GBDT.model', common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
     #iris = load_iris() 
     #print iris, len(iris.target)

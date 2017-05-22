@@ -147,6 +147,82 @@ def analysis_age(file_name):
     plt.title('Depend On Age In Label 1')
     plt.show()
 
+def analysis_ad_data(file_name):
+    ad_df = read_from_file(file_name)
+    print ad_df.info()
+    print ad_df.describe()
+
+    #plot section
+    plt.figure(figsize=(1,3))
+
+    plt.subplot(131)
+    ad_df['appPlatform'].value_counts().plot(kind='pie')
+    plt.title('appPlatform')
+
+    plt.subplot(132)
+    ad_df['appID'].value_counts().plot(kind='bar')
+    plt.title('appID')
+
+    plt.subplot(133)
+    ad_df['advertiserID'].plot(kind='kde')
+    plt.title('advertiserID')
+
+    plt.show()
+
+def analysis_pos_data(file_name):
+    pos_df = read_from_file(file_name)
+    print pos_df.info()
+    print pos_df.describe()
+
+    #plot section
+    plt.figure(figsize=(1,3))
+
+    plt.subplot(131)
+    pos_df['positionID'].value_counts().plot()
+    plt.title('positionID')
+
+    plt.subplot(132)
+    pos_df['sitesetID'].value_counts().plot(kind='bar')
+    plt.title('sitesetID')
+
+    plt.subplot(133)
+    pos_df['positionType'].value_counts().plot(kind='bar')
+    plt.title('positionType')
+
+    plt.show()
+
+def analysis_user_data(file_name):
+    user_df = read_from_file(file_name)
+    print user_df.info()
+    print user_df.describe()
+
+    #plot section
+    plt.figure(figsize=(2,3))
+
+    plt.subplot(231)
+    age_ser = user_df['age'].value_counts()
+    age_ser.plot(use_index=False)
+    plt.legend(loc='best')
+    plt.title('age')
+
+    plt.subplot(232)
+    user_df['gender'].value_counts().plot(kind='pie')
+    plt.title('gender')
+
+    plt.subplot(233)
+    user_df['education'].value_counts().plot(kind='bar')
+    plt.title('education')
+
+    plt.subplot(234)
+    user_df['marriageStatus'].value_counts().plot(kind='pie')
+    plt.title('marriageStatus')
+
+    plt.subplot(224)
+    user_df['haveBaby'].value_counts().plot(kind='bar')
+    plt.title('haveBaby')
+
+    plt.show()
+
 if __name__ == '__main__':
     #analysis_connec_type(common.PROCESSED_TRAIN_CSV)
     #analysis_telecom(common.PROCESSED_TRAIN_CSV)
