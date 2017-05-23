@@ -6,7 +6,7 @@ import xgboost as xgb
 from sklearn.datasets import load_iris
 from sklearn.metrics import mean_squared_error
 
-def read_from_file(file_name, chunk_size=50000):
+def read_from_file(file_name, chunk_size=500000):
     reader = pd.read_csv(file_name, iterator=True)
     chunks = []
     mark = True
@@ -53,19 +53,65 @@ def test():
         error += err * err
     print 'Test Error: %f' % (error / len(pred))'''
 
-def merge_all_features_to_train(train_file_name):
-    ori_train_df = read_from_file(train_file_name)
-    #merge data frame
-    #at first you should run data_process.py file
-    print "Merge Data..."
-    processed_ad_df = read_from_file(common.PROCESSED_AD_CSV)
-    processed_pos_df = read_from_file(common.PROCESSED_POSITION_CSV)
-    processed_user_df = read_from_file(common.PROCESSED_USER_CSV)
-    merge_train_data = pd.merge(ori_train_df,processed_ad_df,how='left',on='creativeID')
-    merge_train_data = pd.merge(merge_train_data, processed_pos_df,how='left', on='positionID')
-    merge_train_data = pd.merge(merge_train_data, processed_user_df,how='left', on='userID')
-    print 'Merge AD POSITION USER Data Done...'
-    return merge_train_data
+def merge_and_select_ad(ori_train_df):
+    #ad.csv
+    processd_ad_df = read_from_file(common.PROCESSED_AD_CSV)
+    selected_features_ad = ['creativeID','adID','camgaignID','advertiserID','appID','appPlatform','appPlatform_1','appPlatform_2']
+    selected_ad_df = processd_ad_df[selected_features_ad]
+    df = pd.merge(ori_train_df, selected_ad_df, how='left', on='creativeID')
+
+    #app_categories.csv
+    processd_app_df = read_from_file(common.PROCESSED_APP_CATEGORIES_CSV)
+    selected_features_app = ['appID','appCategory','appCategoryFirst','appCategorySecond']
+    selected_app_df = processd_app_df[selected_features_app]
+    df = pd.merge(df, selected_app_df, how='left', on='appID')
+
+    return df
+
+def merge_and_select_user(ori_train_df):
+    #user.csv
+    processd_user_df = read_from_file(common.PROCESSED_USER_CSV)
+    selected_features_user = ['userID','age','gender','education','marriageStatus','haveBaby','hometownProvID','hometownCityID','residenceProvID','residenceCityID']
+    selected_user_df = processd_user_df[selected_features_user]
+    df = pd.merge(ori_train_df, selected_user_df, how='left', on='userID')
+
+    #user_app_actions.csv
+    '''processd_actions_df = read_from_file(common.PROCESSED_APP_CATEGORIES_CSV)
+    selected_features_app = ['appID','appCategory','appCategoryFirst','appCategorySecond']
+    selected_app_df = processd_app_df[selected_features_app]
+    df = pd.merge(df, selected_app_df, how='left', on='appID')'''
+
+    #user_installedapps.csv
+    processd_installed_df = read_from_file(common.ORIGIN_USER_INSTALLEDAPPS_CSV)
+    tmp_seri = processd_installed_df['userID'].value_counts().sort_index()
+    tmp_df = pd.DataFrame({'userID':list(tmp_seri.index), 'appCount':list(tmp_seri.values)})
+    tmp_df['canCount'] = 1
+    df = pd.merge(df, tmp_df, how='left', on='userID')
+    df = df.fillna(0)
+
+    return df
+
+def merge_and_select_other(ori_train_df):
+    #position.csv
+    processd_pos_df = read_from_file(common.PROCESSED_POSITION_CSV)
+    selected_features_pos = ['positionID','sitesetID','positionType']
+    selected_pos_df = processd_pos_df[selected_features_pos]
+    df = pd.merge(ori_train_df, selected_pos_df, how='left', on='positionID')
+
+    return df
+
+def merge_features_to_use(file_name):
+    ori_df = read_from_file(file_name)
+    print "Merge And Select Ad Data..."
+    ori_df = merge_and_select_ad(ori_df)
+    print "Done"
+    print "Merge And Select User Data..."
+    ori_df = merge_and_select_user(ori_df)
+    print "Done"
+    print "Merge And Select Other Data..."
+    ori_df = merge_and_select_other(ori_df)
+    print "Done"
+    return ori_df
 
 def generate_XGB_model(train_df):
     #featrue 18
@@ -120,4 +166,5 @@ def train_to_predict(train_file_name, test_file_name, out_put):
     result.to_csv(out_put, index=False)'''
 
 if __name__ == '__main__':
-    train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
+    #train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
+    merge_features_to_train(common.ORIGIN_TRAIN_CSV)
