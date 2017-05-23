@@ -95,7 +95,7 @@ def generate_GBDT_model(file_name):
     X = train_np[:,1:]
     print 'Train Gradient Boosting Regression Model...'
     start_time  = datetime.datetime.now()
-    gbdt = GradientBoostingRegressor(n_estimators=12000, max_depth=10) #, class_weight='balanced')
+    gbdt = GradientBoostingRegressor(n_estimators=120, max_depth=10) #, class_weight='balanced')
     gbdt.fit(X,y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: '

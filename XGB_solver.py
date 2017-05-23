@@ -67,28 +67,24 @@ def merge_all_features_to_train(train_file_name):
     print 'Merge AD POSITION USER Data Done...'
     return merge_train_data
 
-def generate_XGB_model(file_name):
-    train_df = read_from_file(file_name)
+def generate_XGB_model(train_df):
     #featrue 18
-    selected_train_df = train_df.filter(regex='label|creativeID|positionID|connectionType|telecomsOperator|adID|camgaignID|advertiserID|appID|appPlatform|sitesetID|positionType|age|gender|education|marriageStatus|haveBaby|hometown|residence')
+    selected_train_df = train_df.filter(regex='label|creativeID|positionID|telecomsOperator|adID|camgaignID|advertiserID|appID|appPlatform|sitesetID|positionType|age|gender|education|marriageStatus|haveBaby|hometown|residence')
     train_np = selected_train_df.as_matrix()
     y = train_np[:,0]
     X = train_np[:,1:]
     print 'Train Xgboost Model...'
     start_time  = datetime.datetime.now()
-    xbg_clf = xgb.XGBRegressor(n_estimators=12000, max_depth=10) #, class_weight='balanced')
+    xbg_clf = xgb.XGBRegressor(n_estimators=100, max_depth=6)
     xbg_clf.fit(X,y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: '
     print (end_time - start_time).seconds
 
-    #print 'Save Model...'
-    #joblib.dump(xbg_clf, 'GBDT.model')
     return xbg_clf
 
-def use_model_to_predict(test_file_name, model):
-    test_df = read_from_file(test_file_name)
-    selected_test_df = test_df.filter(regex='creativeID|positionID|connectionType|telecomsOperator|adID|camgaignID|advertiserID|appID|appPlatform|sitesetID|positionType|age|gender|education|marriageStatus|haveBaby|hometown|residence')
+def use_model_to_predict(test_df, model):
+    selected_test_df = test_df.filter(regex='creativeID|positionID|telecomsOperator|adID|camgaignID|advertiserID|appID|appPlatform|sitesetID|positionType|age|gender|education|marriageStatus|haveBaby|hometown|residence')
     test_np = selected_test_df.as_matrix()
     print 'Use Model To Predict...'
     #model_df =pd.DataFrame({'coef':model.coef_.T[:,0], 'columns':list(selected_test_df.columns)}) 
@@ -99,10 +95,24 @@ def use_model_to_predict(test_file_name, model):
     #print predicts#, predicts.min(axis=0), predicts.max(axis=0), predicts.sum(axis=1)
     return result
 
+def filter_some_feature(train_df):
+    df = train_df[train_df.connectionType == 1]
+    return df
+
 def train_to_predict(train_file_name, test_file_name, out_put):
-    XGB_clf = generate_XGB_model(train_file_name)
-    result = use_model_to_predict(test_file_name, XGB_clf)
-    result.to_csv(out_put, index=False)
+    train_df = read_from_file(train_file_name)
+    train_df = filter_some_feature(train_df)
+
+    XGB_clf = generate_XGB_model(train_df)
+
+    test_df = read_from_file(test_file_name)
+    ret = pd.DataFrame({'instanceID':test_df['instanceID'].as_matrix()})
+    test_df = filter_some_feature(test_df)
+
+    result = use_model_to_predict(test_df, XGB_clf)
+    ret = pd.merge(ret, result, how='left', on='instanceID')
+    ret = ret.fillna(0)
+    ret.to_csv(out_put, index=False)
 
 '''def read_model_to_predict(model, test_file_name, out_put):
     clf = joblib.load(model)
@@ -110,7 +120,4 @@ def train_to_predict(train_file_name, test_file_name, out_put):
     result.to_csv(out_put, index=False)'''
 
 if __name__ == '__main__':
-    #test()
-    #iris = load_iris() 
-    #print type(iris.data), type(iris.target)
     train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)

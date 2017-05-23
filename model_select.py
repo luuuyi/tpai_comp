@@ -34,7 +34,7 @@ def xgb_model_select(file_name):
     print 'Select Model...'
     start_time  = datetime.datetime.now()
     xgb_clf = xgb.XGBRegressor() 
-    parameters = {'n_estimators': [12000], 'max_depth':[6,7,8,9]}
+    parameters = {'n_estimators': [120, 100, 140, 1200, 1000, 1400], 'max_depth':[3,4,5,6,7,8,9,10]}
     grid_search = GridSearchCV(estimator=xgb_clf, param_grid=parameters, cv=10, n_jobs=-1)
     print("parameters:")
     pprint.pprint(parameters)
@@ -58,7 +58,7 @@ def gbdt_select_model(file_name):
     print 'Select Model...'
     start_time  = datetime.datetime.now()
     gbdt = GradientBoostingRegressor() 
-    parameters = {'n_estimators': [10000, 12000], 'max_depth':[16,15, 14]}
+    parameters = {'n_estimators': [100, 120], 'max_depth':[4, 5, 6]}
     grid_search = GridSearchCV(estimator=gbdt, param_grid=parameters, cv=10, n_jobs=-1)
     print("parameters:")
     pprint.pprint(parameters)
