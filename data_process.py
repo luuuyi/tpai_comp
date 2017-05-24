@@ -60,8 +60,6 @@ def process_user_app_actions_file(src_file_name,dst_file_name):
     origin_user_app_actions_df['installTimeDay'] = origin_user_app_actions_df['installTime'].as_matrix() / 10000
     origin_user_app_actions_df['installTimeHour'] = (origin_user_app_actions_df['installTime'].as_matrix() % 10000) / 100
     origin_user_app_actions_df['installTimeMinu'] = origin_user_app_actions_df['installTime'].as_matrix() % 100
-    print origin_user_app_actions_df.info()
-    print origin_user_app_actions_df.describe()
 
     origin_user_app_actions_df.to_csv(dst_file_name, index=False)
 
@@ -69,17 +67,11 @@ def process_user_installed_app_file(src_file_name,dst_file_name):
     origin_user_installed_app_df = read_from_file(src_file_name)
     tmp_seri = origin_user_installed_app_df['userID'].value_counts().sort_index()
     tmp_df = pd.DataFrame({'userID':list(tmp_seri.index), 'appCount':list(tmp_seri.values)})
-    origin_user_installed_app_df = pd.merge(origin_user_installed_app_df, tmp_df, how='left', on='userID')
-    print origin_user_installed_app_df.info()
-    print origin_user_installed_app_df.describe()
 
-    origin_user_installed_app_df.to_csv(dst_file_name, index=False)
+    tmp_df.to_csv(dst_file_name, index=False)
 
 def process_train_file(src_file_name, dst_file_name,):
     ori_train_df = read_from_file(src_file_name)
-    dummy_connect_type = pd.get_dummies(ori_train_df['connectionType'], prefix='connectionType')
-    dummy_telecoms = pd.get_dummies(ori_train_df['telecomsOperator'], prefix='telecomsOperator')
-    ori_train_df = pd.concat([ori_train_df, dummy_connect_type, dummy_telecoms], axis=1)
     ori_train_df['clickTimeDay'] = ori_train_df['clickTime'].as_matrix() / 10000
     ori_train_df['clickTimeHour'] = (ori_train_df['clickTime'].as_matrix() % 10000) / 100
     ori_train_df['clickTimeMinu'] = ori_train_df['clickTime'].as_matrix() % 100
@@ -88,9 +80,6 @@ def process_train_file(src_file_name, dst_file_name,):
 
 def process_test_file(src_file_name, dst_file_name):
     ori_test_df = read_from_file(src_file_name)
-    dummy_connect_type = pd.get_dummies(ori_test_df['connectionType'], prefix='connectionType')
-    dummy_telecoms = pd.get_dummies(ori_test_df['telecomsOperator'], prefix='telecomsOperator')
-    ori_test_df = pd.concat([ori_test_df, dummy_connect_type, dummy_telecoms], axis=1)
     ori_test_df['clickTimeDay'] = ori_test_df['clickTime'].as_matrix() / 10000
     ori_test_df['clickTimeHour'] = (ori_test_df['clickTime'].as_matrix() % 10000) / 100
     ori_test_df['clickTimeMinu'] = ori_test_df['clickTime'].as_matrix() % 100
@@ -100,9 +89,9 @@ def process_test_file(src_file_name, dst_file_name):
 if __name__ == '__main__':
     #process_ad_file(common.ORIGIN_AD_CSV, common.PROCESSED_AD_CSV)
     #process_position_file(common.ORIGIN_POSITION_CSV, common.PROCESSED_POSITION_CSV)
-    process_user_file(common.ORIGIN_USER_CSV, common.PROCESSED_USER_CSV)
+    #process_user_file(common.ORIGIN_USER_CSV, common.PROCESSED_USER_CSV)
     #process_app_category_file(common.ORIGIN_APP_CATEGORIES_CSV, common.PROCESSED_APP_CATEGORIES_CSV)
     #process_user_app_actions_file(common.ORIGIN_USER_APP_ACTIONS_CSV, common.PROCESSED_USER_APP_ACTIONS_CSV)
-    #process_user_installed_app_file(common.ORIGIN_USER_INSTALLEDAPPS_CSV, common.PROCESSED_USER_INSTALLEDAPPS_CSV)
-    #process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV)
-    #process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV)
+    process_user_installed_app_file(common.ORIGIN_USER_INSTALLEDAPPS_CSV, common.PROCESSED_USER_INSTALLEDAPPS_CSV)
+    process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV)
+    process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV)

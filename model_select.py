@@ -9,6 +9,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.datasets import load_iris
 from sklearn.externals import joblib
 from sklearn.model_selection import GridSearchCV
+import logging
 
 def read_from_file(file_name, chunk_size=50000):
     reader = pd.read_csv(file_name, iterator=True)
@@ -34,7 +35,7 @@ def xgb_model_select(file_name):
     print 'Select Model...'
     start_time  = datetime.datetime.now()
     xgb_clf = xgb.XGBRegressor() 
-    parameters = {'n_estimators': [120, 100, 140, 1200, 1000, 1400], 'max_depth':[3,4,5,6,7,8,9,10]}
+    parameters = {'n_estimators': [120, 100, 140], 'max_depth':[3,5,7,9]}
     grid_search = GridSearchCV(estimator=xgb_clf, param_grid=parameters, cv=10, n_jobs=-1)
     print("parameters:")
     pprint.pprint(parameters)
