@@ -6,6 +6,8 @@ import xgboost as xgb
 from sklearn.datasets import load_iris
 from sklearn.externals import joblib
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import GridSearchCV
+import pprint
 
 def read_from_file(file_name, chunk_size=500000):
     reader = pd.read_csv(file_name, iterator=True)
@@ -111,6 +113,32 @@ def train_model_for_appcounts(df):
 
     return df, xgb_reg
 
+def fix_missing_age(df, model):
+    age_df = df[['age', 'appCount','gender','education','marriageStatus','haveBaby']]
+    unknown_age = age_df[age_df.age == 0].as_matrix()
+    predicted_age = model.predict(unknown_age[:, 1:])
+    df.loc[ (df.age == 0), 'age' ] = predicted_age
+    return df
+
+def train_model_for_age(df):
+    age_df = df[['age', 'appCount','gender','education','marriageStatus','haveBaby']]
+    known_age = age_df[age_df.age != 0].as_matrix()
+    unknown_age = age_df[age_df.age == 0].as_matrix()
+    y = known_age[:, 0]
+    X = known_age[:, 1:]
+
+    print 'Train Xgboost Model(For Missing Age)...'
+    start_time  = datetime.datetime.now()
+    xgb_reg = xgb.XGBRegressor(n_estimators=100, max_depth=3)
+    xgb_reg.fit(X, y)
+    end_time = datetime.datetime.now()
+    print 'Training Done..., Time Cost: %d' % ((end_time - start_time).seconds)
+
+    predicted_age = xgb_reg.predict(unknown_age[:, 1:])
+    df.loc[ (df.age == 0), 'age' ] = predicted_age 
+
+    return df, xgb_reg
+
 def merge_features_to_use(file_name):
     ori_df = read_from_file(file_name)
     ori_df.drop(['clickTime', 'clickTimeDay', 'clickTimeHour', 'clickTimeMinu'], axis=1, inplace=True)
@@ -131,6 +159,9 @@ def generate_XGB_model(train_df):
     print 'Train And Fix Missing App Count Value...'
     train_df, xgb_appcount = train_model_for_appcounts(train_df)
     joblib.dump(xgb_appcount, 'XGB_missing.model')
+    '''print 'Train And Fix Missing Age Value...'
+    train_df, xgb_age = train_model_for_age(train_df)
+    joblib.dump(xgb_age, 'XGB_age.model')'''
     print 'Done'
     print train_df.info()
     print train_df.describe()
@@ -153,6 +184,9 @@ def use_model_to_predict(test_df, model):
     print 'Fix Missing App Count Value...'
     model_miss = joblib.load('XGB_missing.model')
     test_df = fix_missing_appcounts(test_df, model_miss)
+    '''print 'Fix Missing Age Value...'
+    model_age = joblib.load('XGB_age.model')
+    test_df = fix_missing_age(test_df, model_age)'''
     print 'Done'
     print test_df.info()
     print test_df.describe()
@@ -165,9 +199,34 @@ def use_model_to_predict(test_df, model):
     #print predicts#, predicts.min(axis=0), predicts.max(axis=0), predicts.sum(axis=1)
     return result
 
-def filter_some_feature(train_df):
-    df = train_df[train_df.connectionType == 1]
-    return df
+def xgb_model_select(train_file_name):  
+    train_df = merge_features_to_use(train_file_name)
+    train_df.drop(['conversionTime'], axis=1, inplace=True)
+    print 'Train And Fix Missing App Count Value...'
+    train_df, xgb_appcount = train_model_for_appcounts(train_df)
+    joblib.dump(xgb_appcount, 'XGB_missing.model')
+    print train_df.info()
+    print train_df.describe()
+    print train_df.isnull().sum()
+    train_np = train_df.as_matrix()
+    y = train_np[:,0]
+    X = train_np[:,1:]
+
+    print 'Select Model...'
+    start_time  = datetime.datetime.now()
+    xgb_clf = xgb.XGBRegressor() 
+    parameters = {'n_estimators': [120, 100, 140], 'max_depth':[3,5,7,9], 'gamma':[0.1,0.3,0.5,0.7], 'min_child_weight':[1,3,5,7], }
+    grid_search = GridSearchCV(estimator=xgb_clf, param_grid=parameters, cv=10, n_jobs=-1)
+    print("parameters:")
+    pprint.pprint(parameters)
+    grid_search.fit(X, y)
+    print("Best score: %0.3f" % grid_search.best_score_)
+    print("Best parameters set:")
+    best_parameters=grid_search.best_estimator_.get_params()
+    for param_name in sorted(parameters.keys()):
+        print("\t%s: %r" % (param_name, best_parameters[param_name]))
+    end_time = datetime.datetime.now()
+    print 'Select Done..., Time Cost: %d' % ((end_time - start_time).seconds)
 
 def train_to_predict(train_file_name, test_file_name, out_put):
     train_df = merge_features_to_use(train_file_name)
@@ -184,7 +243,8 @@ def train_to_predict(train_file_name, test_file_name, out_put):
     result.to_csv(out_put, index=False)'''
 
 if __name__ == '__main__':
-    train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
+    #train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
     #merge_features_to_use(common.PROCESSED_TRAIN_CSV)
     #merge_features_to_use(common.PROCESSED_TEST_CSV)
     #test_merge_appcount(common.PROCESSED_TRAIN_CSV)
+    xgb_model_select(common.PROCESSED_TRAIN_CSV)
