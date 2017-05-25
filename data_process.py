@@ -87,11 +87,11 @@ def process_test_file(src_file_name, dst_file_name):
     ori_test_df.to_csv(dst_file_name,index=False)
 
 if __name__ == '__main__':
-    #process_ad_file(common.ORIGIN_AD_CSV, common.PROCESSED_AD_CSV)
-    #process_position_file(common.ORIGIN_POSITION_CSV, common.PROCESSED_POSITION_CSV)
-    #process_user_file(common.ORIGIN_USER_CSV, common.PROCESSED_USER_CSV)
-    #process_app_category_file(common.ORIGIN_APP_CATEGORIES_CSV, common.PROCESSED_APP_CATEGORIES_CSV)
-    #process_user_app_actions_file(common.ORIGIN_USER_APP_ACTIONS_CSV, common.PROCESSED_USER_APP_ACTIONS_CSV)
+    process_ad_file(common.ORIGIN_AD_CSV, common.PROCESSED_AD_CSV)
+    process_position_file(common.ORIGIN_POSITION_CSV, common.PROCESSED_POSITION_CSV)
+    process_user_file(common.ORIGIN_USER_CSV, common.PROCESSED_USER_CSV)
+    process_app_category_file(common.ORIGIN_APP_CATEGORIES_CSV, common.PROCESSED_APP_CATEGORIES_CSV)
+    process_user_app_actions_file(common.ORIGIN_USER_APP_ACTIONS_CSV, common.PROCESSED_USER_APP_ACTIONS_CSV)
     process_user_installed_app_file(common.ORIGIN_USER_INSTALLEDAPPS_CSV, common.PROCESSED_USER_INSTALLEDAPPS_CSV)
     process_train_file(common.ORIGIN_TRAIN_CSV, common.PROCESSED_TRAIN_CSV)
     process_test_file(common.ORIGIN_TEST_CSV, common.PROCESSED_TEST_CSV)

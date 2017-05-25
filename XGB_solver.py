@@ -162,6 +162,7 @@ def generate_XGB_model(train_df):
     '''print 'Train And Fix Missing Age Value...'
     train_df, xgb_age = train_model_for_age(train_df)
     joblib.dump(xgb_age, 'XGB_age.model')'''
+    train_df.drop(['marriageStatus','haveBaby','appCategoryFirst','appCategorySecond'], axis=1, inplace=True)
     print 'Done'
     print train_df.info()
     print train_df.describe()
@@ -187,6 +188,7 @@ def use_model_to_predict(test_df, model):
     '''print 'Fix Missing Age Value...'
     model_age = joblib.load('XGB_age.model')
     test_df = fix_missing_age(test_df, model_age)'''
+    test_df.drop(['marriageStatus','haveBaby', 'appCategoryFirst','appCategorySecond'], axis=1, inplace=True)
     print 'Done'
     print test_df.info()
     print test_df.describe()
@@ -243,8 +245,8 @@ def train_to_predict(train_file_name, test_file_name, out_put):
     result.to_csv(out_put, index=False)'''
 
 if __name__ == '__main__':
-    #train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
+    train_to_predict(common.PROCESSED_TRAIN_CSV, common.PROCESSED_TEST_CSV, common.SUBMISSION_CSV)
     #merge_features_to_use(common.PROCESSED_TRAIN_CSV)
     #merge_features_to_use(common.PROCESSED_TEST_CSV)
     #test_merge_appcount(common.PROCESSED_TRAIN_CSV)
-    xgb_model_select(common.PROCESSED_TRAIN_CSV)
+    #xgb_model_select(common.PROCESSED_TRAIN_CSV)
