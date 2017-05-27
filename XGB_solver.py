@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import common
 import datetime
-import xgboost as xgb 
+import xgboost as xgb
+from xgboost.sklearn import XGBRegressor
 from sklearn.datasets import load_iris
 from sklearn.externals import joblib
 from sklearn.metrics import mean_squared_error
@@ -103,7 +104,7 @@ def train_model_for_appcounts(df):
 
     print 'Train Xgboost Model(For Missing AppCount)...'
     start_time  = datetime.datetime.now()
-    xgb_reg = xgb.XGBRegressor(n_estimators=100, max_depth=3)
+    xgb_reg = XGBRegressor(n_estimators=100, max_depth=3)
     xgb_reg.fit(X, y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: %d' % ((end_time - start_time).seconds)
@@ -129,7 +130,7 @@ def train_model_for_age(df):
 
     print 'Train Xgboost Model(For Missing Age)...'
     start_time  = datetime.datetime.now()
-    xgb_reg = xgb.XGBRegressor(n_estimators=100, max_depth=3)
+    xgb_reg = XGBRegressor(n_estimators=100, max_depth=3)
     xgb_reg.fit(X, y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: %d' % ((end_time - start_time).seconds)
@@ -162,7 +163,7 @@ def generate_XGB_model(train_df):
     '''print 'Train And Fix Missing Age Value...'
     train_df, xgb_age = train_model_for_age(train_df)
     joblib.dump(xgb_age, 'XGB_age.model')'''
-    train_df.drop(['marriageStatus','haveBaby','appCategoryFirst','appCategorySecond'], axis=1, inplace=True)
+    train_df.drop(['marriageStatus','haveBaby','sitesetID', 'positionType'], axis=1, inplace=True)
     print 'Done'
     print train_df.info()
     print train_df.describe()
@@ -172,7 +173,7 @@ def generate_XGB_model(train_df):
     X = train_np[:,1:]
     print 'Train Xgboost Model...'
     start_time  = datetime.datetime.now()
-    xbg_clf = xgb.XGBRegressor(n_estimators=100, max_depth=6)
+    xbg_clf = XGBRegressor(n_estimators=100, max_depth=6, objective="binary:logistic", silent=False)
     xbg_clf.fit(X,y)
     end_time = datetime.datetime.now()
     print 'Training Done..., Time Cost: %d' % ((end_time - start_time).seconds)
@@ -188,7 +189,7 @@ def use_model_to_predict(test_df, model):
     '''print 'Fix Missing Age Value...'
     model_age = joblib.load('XGB_age.model')
     test_df = fix_missing_age(test_df, model_age)'''
-    test_df.drop(['marriageStatus','haveBaby', 'appCategoryFirst','appCategorySecond'], axis=1, inplace=True)
+    test_df.drop(['marriageStatus','haveBaby','sitesetID', 'positionType'], axis=1, inplace=True)
     print 'Done'
     print test_df.info()
     print test_df.describe()

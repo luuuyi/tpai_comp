@@ -1,4 +1,4 @@
-import sys
+import logging
 
 #origin data
 ORIGIN_AD_CSV = './data/pre/ad.csv'
@@ -22,3 +22,24 @@ PROCESSED_USER_INSTALLEDAPPS_CSV = './data/process/user_installedapps.csv'
 
 #submission file
 SUBMISSION_CSV = './submission.csv'
+SUBMISSION_ZIP = './submission.zip'
+
+def init_my_logger(): 
+    logger = logging.getLogger()  
+    logger.setLevel(logging.DEBUG)
+    
+    logfile = './log.txt'  
+    fh = logging.FileHandler(logfile, mode='w')  
+    fh.setLevel(logging.DEBUG)
+    
+    ch = logging.StreamHandler()  
+    ch.setLevel(logging.INFO)
+    
+    formatter = logging.Formatter("%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s")  
+    fh.setFormatter(formatter)  
+    ch.setFormatter(formatter)  
+    
+    logger.addHandler(fh)  
+    logger.addHandler(ch)  
+
+    return logger
